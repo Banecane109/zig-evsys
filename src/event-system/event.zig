@@ -35,6 +35,7 @@ pub fn Event(comptime T: type) type {
             return instance;
         }
 
+        /// Frees all memory used by event handler
         pub fn deinit(self: *Self) !void {
             // First get arena allocator pointer so we dont lose it before deinit
             const arena: *ArenaAllocator = self.arena_allocator;
@@ -46,12 +47,14 @@ pub fn Event(comptime T: type) type {
             arena.deinit();
         }
 
+        /// Subscribes callback function to event handler
         pub inline fn subscribe(self: *Self, contenxt: ?*anyopaque, callback: Callback) !void {
             self.lock.lock();
             defer self.lock.unlock();
             try self.listeners.append(self.arena_allocator.allocator(), Listener{ .context = contenxt, .func = callback });
         }
 
+        /// Unsubscribes callback function from event handler
         pub inline fn unsubscribe(self: *Self, ctx: ?*anyopaque, func: Callback) void {
             self.lock.lock();
             defer self.lock.unlock();
@@ -68,6 +71,7 @@ pub fn Event(comptime T: type) type {
             }
         }
 
+        /// Fires event and calls all subscribed callbacks
         pub inline fn fire(self: *Self, data: T) !void {
             self.lock.lockShared();
             defer self.lock.unlockShared();
